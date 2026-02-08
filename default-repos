@@ -1,0 +1,3 @@
+binutils    https://github.com/erique/binutils-gdb      amiga
+gcc         https://github.com/erique/gcc               amiga6
+newlib      https://github.com/erique/newlib-cygwin      amiga

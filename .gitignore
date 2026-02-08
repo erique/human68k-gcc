@@ -1,0 +1,8 @@
+build-*/
+log/
+download/
+projects/
+.repos
+.state
+.lock
+.listing
