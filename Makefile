@@ -184,7 +184,7 @@ drop-prefix:
 # =================================================
 # init: clone repos and create human68k branches
 # =================================================
-init: $(PROJECTS)/binutils/configure $(PROJECTS)/gcc/configure $(PROJECTS)/newlib/newlib/configure
+init: $(PROJECTS)/binutils/configure $(PROJECTS)/gcc/configure $(PROJECTS)/newlib/newlib/configure $(PROJECTS)/run68x/CMakeLists.txt
 	@for proj in binutils gcc newlib; do \
 		cd $(PROJECTS)/$$proj && \
 		if ! git rev-parse --verify human68k >/dev/null 2>&1; then \
@@ -364,20 +364,35 @@ $(BUILD)/gcc/_libgcc_done: $(BUILD)/newlib/_done $(shell find 2>/dev/null $(PROJ
 	@echo "done" >$@
 
 # =================================================
-# tools (elf2x68k converter)
+# tools (elf2x68k converter + run68 emulator)
 # =================================================
 .PHONY: tools
-tools: $(PREFIX)/bin/elf2x68k
+tools: $(PREFIX)/bin/elf2x68k $(PREFIX)/bin/run68
 
 $(PREFIX)/bin/elf2x68k: tools/elf2x68k.c
 	$(L0)"build elf2x68k"$(L1) $(CC) -Wall -O2 -o $@ $< $(L2)
 
+$(PREFIX)/bin/run68: $(BUILD)/run68x/run68
+	@install -s $< $@
+
+$(BUILD)/run68x/run68: $(PROJECTS)/run68x/CMakeLists.txt $(shell find 2>/dev/null $(PROJECTS)/run68x/src -type f)
+	@mkdir -p $(BUILD)/run68x
+	$(L0)"build run68"$(L1) cd $(BUILD)/run68x && cmake $(PROJECTS)/run68x -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-Wno-format-truncation" && $(MAKE) $(L2)
+
+$(PROJECTS)/run68x/CMakeLists.txt:
+	@cd $(PROJECTS) && git clone -b $(run68x_BRANCH) --depth 16 $(run68x_URL) run68x
+
 # =================================================
 # run gcc torture check
 # =================================================
-.PHONY: check
-check:
-	$(MAKE) -C $(BUILD)/gcc check-gcc-c "RUNTESTFLAGS=--target_board=human68k execute.exp=* SIM=run68" | grep '# of\|PASS\|FAIL\|===\|Running\|Using'
+.PHONY: check check-torture check-human68k
+check: check-human68k check-torture
+
+check-human68k:
+	testsuite/human68k/run-tests.sh
+
+check-torture:
+	DEJAGNU=$(shell pwd)/testsuite/site.exp $(MAKE) -C $(BUILD)/gcc check-gcc-c "RUNTESTFLAGS=--target_board=human68k execute.exp=* SIM=run68" | grep '# of\|PASS\|FAIL\|===\|Running\|Using'
 
 # =================================================
 # info
