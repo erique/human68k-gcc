@@ -564,13 +564,83 @@ static int hudsonWriteMem(uint32_t addr, const uint8_t* data, int len)
 
 // Continue: DB.X "g=addr" to run from address
 // Bare "g" gives "no process" without a loaded program, so always use g=PC
+// Uses select() to monitor both target and GDB FDs so Ctrl-C can interrupt.
+// Returns: 0 = normal stop (breakpoint/exception), 1 = interrupted by GDB Ctrl-C
 static int hudsonContinue(uint32_t addr)
 {
-    char buf[TARGET_BUFSIZE];
     regsValid = 0;
     targetSend("g=%x\r", addr);
-    targetWaitPrompt(buf, sizeof(buf));
-    return 0;
+
+    char buf[TARGET_BUFSIZE];
+    int pos = 0;
+    int atLineStart = 1;
+    int interrupted = 0;
+
+    while (pos < (int)sizeof(buf) - 1)
+    {
+        fd_set fds;
+        FD_ZERO(&fds);
+        FD_SET(targetFd, &fds);
+        if (gdbFd >= 0)
+            FD_SET(gdbFd, &fds);
+
+        int maxfd = targetFd > gdbFd ? targetFd : gdbFd;
+        int ready = select(maxfd + 1, &fds, NULL, NULL, NULL);
+        if (ready < 0)
+        {
+            if (errno == EINTR) continue;
+            break;
+        }
+
+        // Check for GDB interrupt (Ctrl-C)
+        if (gdbFd >= 0 && FD_ISSET(gdbFd, &fds))
+        {
+            char c;
+            int n = read(gdbFd, &c, 1);
+            if (n <= 0)
+            {
+                // GDB disconnected while target running — stop target
+                fprintf(stderr, "GDB disconnected during continue\n");
+                targetSend("\003");
+                break;
+            }
+            if (c == 0x03)
+            {
+                if (verbose)
+                    fprintf(stderr, "\nGDB Ctrl-C, breaking target\n");
+                targetSend("\003");
+                interrupted = 1;
+            }
+        }
+
+        // Check for target response
+        if (FD_ISSET(targetFd, &fds))
+        {
+            char c;
+            int n = read(targetFd, &c, 1);
+            if (n <= 0) break;
+
+            if (verbose)
+            {
+                if (c >= 0x20 || c == '\n')
+                    fputc(c, stderr);
+                else if (c != '\r')
+                    fprintf(stderr, "\\x%02x", (unsigned char)c);
+            }
+
+            if (c == promptChar && atLineStart)
+            {
+                buf[pos] = '\0';
+                return interrupted;
+            }
+
+            buf[pos++] = c;
+            atLineStart = (c == '\n');
+        }
+    }
+
+    buf[pos] = '\0';
+    return interrupted;
 }
 
 // Step: DB.X "t=addr" to trace from address
@@ -881,8 +951,8 @@ static void handleContinue(const char* data)
         if (!regsValid) hudsonFetchRegs();
         addr = regs[17];
     }
-    hudsonContinue(addr);
-    rspPutPacket("S05");
+    int interrupted = hudsonContinue(addr);
+    rspPutPacket(interrupted ? "S02" : "S05");
 }
 
 // 's [addr]' - single step
