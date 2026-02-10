@@ -126,7 +126,7 @@ help:
 	@echo "make info                    print prefix and other flags"
 	@echo "make all                     build and install all"
 	@echo "make min                     build and install the minimal to use gcc"
-	@echo "make <target>                builds a target: binutils, gcc, newlib, libgcc, gdb"
+	@echo "make <target>                builds a target: binutils, gcc, newlib, libgcc, gdb, vasm"
 	@echo "make clean                   remove the build folder"
 	@echo "make clean-<target>          remove the target's build folder"
 	@echo "make drop-prefix             remove all content from the prefix folder"
@@ -139,14 +139,14 @@ help:
 # =================================================
 .PHONY: all min gcc gdb binutils newlib libgcc
 
-all: binutils gcc newlib libgcc gdb tools
+all: binutils gcc newlib libgcc gdb tools vasm
 
 min: binutils gcc newlib libgcc tools
 
 # =================================================
 # clean
 # =================================================
-.PHONY: drop-prefix clean clean-gcc clean-binutils clean-libgcc clean-newlib clean-gdb
+.PHONY: drop-prefix clean clean-gcc clean-binutils clean-libgcc clean-newlib clean-gdb clean-vasm
 
 clean: clean-gcc clean-binutils clean-newlib
 	rm -rf $(BUILD)
@@ -200,9 +200,9 @@ init: $(PROJECTS)/binutils/configure $(PROJECTS)/gcc/configure $(PROJECTS)/newli
 # =================================================
 # update all projects
 # =================================================
-.PHONY: update update-gcc update-binutils update-newlib
+.PHONY: update update-gcc update-binutils update-newlib update-vasm
 
-update: update-gcc update-binutils update-newlib
+update: update-gcc update-binutils update-newlib update-vasm
 
 update-gcc: $(PROJECTS)/gcc/configure
 	@cd $(PROJECTS)/gcc && git pull || (export DEPTH=16; while true; do echo "trying depth=$$DEPTH"; git pull --depth $$DEPTH && break; export DEPTH=$$(($$DEPTH+$$DEPTH));done)
@@ -386,13 +386,57 @@ $(PROJECTS)/run68x/CMakeLists.txt:
 	@cd $(PROJECTS) && git clone -b $(run68x_BRANCH) --depth 16 $(run68x_URL) run68x
 
 # =================================================
+# vasm (m68k assembler)
+# =================================================
+VASM_CMD := vasmm68k_mot
+VASM := $(patsubst %,$(PREFIX)/bin/%$(EXEEXT), $(VASM_CMD))
+
+.PHONY: vasm asm-inc
+
+vasm: $(BUILD)/vasm/_done asm-inc
+
+$(BUILD)/vasm/_done: $(BUILD)/vasm/Makefile
+	$(L0)"make vasm"$(L1) $(MAKE) -C $(BUILD)/vasm CPU=m68k SYNTAX=mot $(L2)
+	@mkdir -p $(PREFIX)/bin/
+	$(L0)"install vasm"$(L1) install $(BUILD)/vasm/vasmm68k_mot $(PREFIX)/bin/ ;\
+	install $(BUILD)/vasm/vobjdump $(PREFIX)/bin/ $(L2)
+	@echo "done" >$@
+
+$(BUILD)/vasm/Makefile: $(PROJECTS)/vasm/Makefile $(shell find 2>/dev/null $(PROJECTS)/vasm -not \( -path $(PROJECTS)/vasm/.git -prune \) -type f)
+	@rsync -a --no-group $(PROJECTS)/vasm $(BUILD)/ --exclude .git
+	@touch $(BUILD)/vasm/Makefile
+
+$(PROJECTS)/vasm/Makefile:
+	@cd $(PROJECTS) && git clone -b $(vasm_BRANCH) --depth 4 $(vasm_URL)
+
+clean-vasm:
+	rm -rf $(BUILD)/vasm
+
+update-vasm: $(PROJECTS)/vasm/Makefile
+	@cd $(PROJECTS)/vasm && git pull
+
+# =================================================
+# assembly include files (dos.inc, iocs.inc)
+# =================================================
+ASM_INC_DIR := $(PREFIX)/$(TARGET)/include/asm
+
+asm-inc: $(ASM_INC_DIR)/dos.inc $(ASM_INC_DIR)/iocs.inc
+
+$(ASM_INC_DIR)/dos.inc $(ASM_INC_DIR)/iocs.inc: tools/gen-asm-inc.sh $(PROJECTS)/newlib/newlib/configure
+	@mkdir -p $(ASM_INC_DIR)
+	$(L0)"generate asm includes"$(L1) tools/gen-asm-inc.sh $(PROJECTS)/newlib/newlib/libc/sys/human68k $(ASM_INC_DIR) $(L2)
+
+# =================================================
 # run gcc torture check
 # =================================================
-.PHONY: check check-torture check-human68k
-check: check-human68k check-torture
+.PHONY: check check-torture check-human68k check-vasm
+check: check-human68k check-vasm check-torture
 
 check-human68k:
 	testsuite/human68k/run-tests.sh
+
+check-vasm:
+	testsuite/vasm/run-tests.sh
 
 check-torture:
 	DEJAGNU=$(shell pwd)/testsuite/site.exp $(MAKE) -C $(BUILD)/gcc check-gcc-c "RUNTESTFLAGS=--target_board=human68k execute.exp=* SIM=run68" | grep '# of\|PASS\|FAIL\|===\|Running\|Using'
