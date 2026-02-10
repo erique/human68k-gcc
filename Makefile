@@ -367,10 +367,13 @@ $(BUILD)/gcc/_libgcc_done: $(BUILD)/newlib/_done $(shell find 2>/dev/null $(PROJ
 # tools (elf2x68k converter + run68 emulator)
 # =================================================
 .PHONY: tools
-tools: $(PREFIX)/bin/elf2x68k $(PREFIX)/bin/run68
+tools: $(PREFIX)/bin/elf2x68k $(PREFIX)/bin/run68 $(PREFIX)/bin/hudson-bridge
 
 $(PREFIX)/bin/elf2x68k: tools/elf2x68k.c
 	$(L0)"build elf2x68k"$(L1) $(CC) -Wall -O2 -o $@ $< $(L2)
+
+$(PREFIX)/bin/hudson-bridge: tools/hudson-bridge.c
+	$(L0)"build hudson-bridge"$(L1) $(CC) -Wall -O2 -o $@ $< $(L2)
 
 $(PREFIX)/bin/run68: $(BUILD)/run68x/run68
 	@install -s $< $@
