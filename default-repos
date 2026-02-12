@@ -1,5 +1,5 @@
-binutils    https://github.com/erique/binutils-gdb      amiga
-gcc         https://github.com/erique/gcc               amiga6
-newlib      https://github.com/erique/newlib-cygwin      amiga
-run68x      https://github.com/erique/run68x            dev
+binutils    https://github.com/erique/binutils-gdb      human68k
+gcc         https://github.com/erique/gcc               human68k
+newlib      https://github.com/erique/newlib-cygwin      human68k
+run68x      https://github.com/kg68k/run68x             main
 vasm        https://github.com/mheyer32/vasm            master
