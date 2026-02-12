@@ -3,12 +3,18 @@
 // Connects to DB.X (standalone debugger) over serial or TCP and translates
 // GDB Remote Serial Protocol packets to HudsonBug text commands.
 //
-// Usage:
-//   hudson-bridge /dev/ttyS0              # serial, default GDB port 2345
-//   hudson-bridge -p 2345 localhost:1234  # TCP (MAME null_modem)
+// MAME setup (X68000 with RS-232C null_modem routed to TCP):
+//   mame x68000 -debug -rs232 null_modem -bitb socket.localhost:1234
+//   (boot disk must have DB.X /R in AUTOEXEC.BAT)
 //
-// Then:
-//   m68k-human68k-gdb hello.x -ex "target remote :2345"
+// Bridge (listen for MAME on 1234, GDB on 2345):
+//   hudson-bridge -l 1234 -p 2345
+//
+// GDB:
+//   m68k-human68k-gdb hello.elf -ex "target remote :2345"
+//
+// Serial (real hardware):
+//   hudson-bridge /dev/ttyS0
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1182,12 +1188,14 @@ static void usage(const char* prog)
     fprintf(stderr, "  -P CHAR   Prompt character: '-' for DB.X (default), '+' for ROM debugger\n");
     fprintf(stderr, "  -v        Verbose (show protocol traffic on stderr)\n");
     fprintf(stderr, "\n");
-    fprintf(stderr, "Examples:\n");
-    fprintf(stderr, "  %s -l 1234 -p 2345         # listen for MAME on 1234, GDB on 2345\n", prog);
-    fprintf(stderr, "  %s -p 2345 localhost:1234   # connect to target on 1234\n", prog);
-    fprintf(stderr, "  %s /dev/ttyS0              # serial port, GDB on default 2345\n", prog);
+    fprintf(stderr, "MAME setup:\n");
+    fprintf(stderr, "  mame x68000 -debug -rs232 null_modem -bitb socket.localhost:1234\n");
+    fprintf(stderr, "  %s -l 1234 -p 2345\n", prog);
+    fprintf(stderr, "  m68k-human68k-gdb hello.elf -ex 'target remote :2345'\n");
     fprintf(stderr, "\n");
-    fprintf(stderr, "Then: m68k-human68k-gdb hello.x -ex 'target remote :2345'\n");
+    fprintf(stderr, "Serial setup:\n");
+    fprintf(stderr, "  %s /dev/ttyS0\n", prog);
+    fprintf(stderr, "  m68k-human68k-gdb hello.elf -ex 'target remote :2345'\n");
 }
 
 static volatile int running = 1;
