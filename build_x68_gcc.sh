@@ -34,11 +34,11 @@ build() {
 }
 
 build binutils-2.22-human68k "--disable-nls --disable-werror"
-build gcc-4.6.2-human68k "--disable-nls --disable-libssp --with-newlib --without-headers --enable-languages=c --disable-werror"
+build gcc-4.6.2-human68k "--disable-nls --disable-libssp --disable-lto --with-newlib --without-headers --enable-languages=c --disable-werror"
 build gdb-7.4-human68k "--disable-werror"
 
 export PATH=$PATH:$PREFIX/bin
-ln -s $PREFIX/bin/human68k-gcc /usr/bin/human68k-cc
+ln -sf $PREFIX/bin/human68k-gcc $PREFIX/bin/human68k-cc
 build newlib-1.19.0-human68k "--disable-werror"
 
 # Patch dos.h (see https://nfggames.com/forum2/index.php?topic=6002.msg41392#msg41392 )
