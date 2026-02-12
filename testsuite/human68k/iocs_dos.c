@@ -1,8 +1,8 @@
 // Test IOCS and DOS library stubs
 // Exercises: _dos_curdrv, _dos_write, _iocs_romver, _iocs_b_putc
 #include <stdio.h>
-#include <dos.h>
-#include <iocs.h>
+#include <sys/dos.h>
+#include <sys/iocs.h>
 
 static int failures = 0;
 

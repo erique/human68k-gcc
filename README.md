@@ -48,9 +48,11 @@ System calls are provided as library functions via hand-written assembly stubs
 in newlib (219 IOCS + 187 DOS):
 
 - **IOCS** (I/O Controller Supervisor): `trap #15` with function number in d0.
-  Called as `_iocs_xxx()` from C, declared in `<iocs.h>`.
+  Called as `_iocs_xxx()` from C, declared in `<sys/iocs.h>`.
+  Frequently-used IOCS calls are also available as inline functions (no library
+  call overhead), enabled by default and suppressible with `-D_NO_INLINE`.
 - **DOS** (Disk Operating System): Inline `.short 0xFFxx` opcodes with args on stack.
-  Called as `_dos_xxx()` from C, declared in `<dos.h>`.
+  Called as `_dos_xxx()` from C, declared in `<sys/dos.h>`.
 
 For assembly programming, `make vasm` installs `dos.inc` and `iocs.inc` with
 EQU constants, generic dispatcher macros, and convenience macros for common calls.
@@ -140,8 +142,9 @@ XC ABI compatibility.
 |----------------------|------------------------|------------------------|------------------------|------------------------|
 | **IOCS calls**       | Assembly stubs (219)   | Assembly stubs (219)   | Native XC headers      | Assembly stubs (219)   |
 | **DOS calls**        | Assembly stubs (187)   | Assembly stubs (187)   | Native XC headers      | Assembly stubs (187)   |
+| **Inline IOCS**      | No                     | Yes (default on)       | N/A (native XC)       | No                     |
 | **iocscall attribute** | Implemented, unused  | Removed                | No                     | No                     |
-| **Headers**          | `<iocs.h>` `<dos.h>`  | `<iocs.h>` `<dos.h>`  | XC `<iocslib.h>`       | `<x68k/iocs.h>` `<x68k/dos.h>` |
+| **Headers**          | `<iocs.h>` `<dos.h>`  | `<sys/iocs.h>` `<sys/dos.h>` | XC `<iocslib.h>`  | `<x68k/iocs.h>` `<x68k/dos.h>` |
 | **vasm includes**    | --                     | `dos.inc` `iocs.inc`   | --                     | --                     |
 
 ### Key trade-offs
