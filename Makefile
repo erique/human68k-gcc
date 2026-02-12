@@ -141,7 +141,7 @@ help:
 
 all: binutils gcc newlib libgcc gdb tools vasm
 
-min: binutils gcc newlib libgcc tools
+min: binutils gcc newlib libgcc tools vasm
 
 # =================================================
 # clean
