@@ -1,7 +1,7 @@
 GCC torture test known failures for m68k-human68k
 ==================================================
 
-Results: 14819 pass / 35 fail (99.8% pass rate)
+Results: 14819 pass / 35 fail
 Tested at 6 optimization levels: -O0, -O1, -O2, -O3, -O3 -g, -Os
 
 None of the failures are codegen bugs. All fall into these categories:
@@ -9,15 +9,11 @@ None of the failures are codegen bugs. All fall into these categories:
 
 Emulator timeout (13 failures)
 ------------------------------
-  memcpy-1.c    all levels except -O3
-  multi-ix.c    all levels
-  pr23135.c     -O0 only
-
-Tests run under run68, a user-mode Human68k emulator that interprets every
-instruction. It is roughly 1000x slower than native execution, and tests
-with large loops or big memory copies exceed the 300-second DejaGNU timeout.
-The same tests pass on real hardware. memcpy-1 at -O3 happens to survive
-because the optimizer replaces the loop with an inline block move.
+  memcpy-1.c    all levels except -O3   (large memcpy loop, slow in run68)
+  multi-ix.c    all levels              (nested loops, slow in run68)
+  pr23135.c     -O0 only                (complex recursion, slow in run68)
+    
+Tests with large loops or big memory copies exceed the 300-second DejaGNU timeout.
 
 
 No PIC/GOT support (15 failures)
@@ -40,8 +36,7 @@ The 68000 has no FPU, so all floating-point is done in software via
 libgcc's soft-float routines (lb1sf68.S). These routines do not generate
 or propagate IEEE 754 special values (infinity, NaN, denormals). The tests
 rely on detecting Inf from overflow or NaN from 0.0/0.0 and fail because
-soft-float returns ordinary (wrong) numeric results instead. The same
-failures occur on amiga-gcc with the same soft-float library.
+soft-float returns ordinary (wrong) numeric results instead.
 
 
 ELF label-difference (1 failure)

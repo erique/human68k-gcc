@@ -439,7 +439,9 @@ check-vasm:
 	HUMAN68K_PREFIX=$(PREFIX) testsuite/vasm/run-tests.sh
 
 check-torture:
-	DEJAGNU=$(shell pwd)/testsuite/site.exp HUMAN68K_PREFIX=$(PREFIX) $(MAKE) -C $(BUILD)/gcc check-gcc-c "RUNTESTFLAGS=--target_board=human68k execute.exp=* SIM=run68" | grep '# of\|PASS\|FAIL\|===\|Running\|Using'
+	@grep -q 'boards_dir.*testsuite/boards' $(BUILD)/gcc/gcc/site.exp 2>/dev/null || \
+		echo 'lappend boards_dir "$(shell pwd)/testsuite/boards"' >> $(BUILD)/gcc/gcc/site.exp
+	HUMAN68K_PREFIX=$(PREFIX) $(MAKE) -C $(BUILD)/gcc check-gcc-c "RUNTESTFLAGS=--target_board=human68k execute.exp=* SIM=run68" | grep '# of\|PASS\|FAIL\|===\|Running\|Using'
 
 # =================================================
 # info
