@@ -1,24 +1,15 @@
 GCC torture test known failures for m68k-human68k
 ==================================================
 
-Results: 14819 pass / 35 fail
+Results: 14832 pass / 22 fail (1 unresolved)
 Tested at 6 optimization levels: -O0, -O1, -O2, -O3, -O3 -g, -Os
 
 None of the failures are codegen bugs. All fall into these categories:
 
 
-Emulator timeout (13 failures)
-------------------------------
-  memcpy-1.c    all levels except -O3   (large memcpy loop, slow in run68)
-  multi-ix.c    all levels              (nested loops, slow in run68)
-  pr23135.c     -O0 only                (complex recursion, slow in run68)
-    
-Tests with large loops or big memory copies exceed the 300-second DejaGNU timeout.
-
-
 No PIC/GOT support (15 failures)
 ---------------------------------
-  pr71626-2.c   all levels (3 compile errors + 12 execution failures)
+  pr71626-2.c   all levels (3 results per level: blank lines, excess errors, execution)
 
 This test requires -fpic (position-independent code), which needs a Global
 Offset Table (GOT). Human68k is a bare-metal target with no dynamic linker
@@ -39,8 +30,8 @@ rely on detecting Inf from overflow or NaN from 0.0/0.0 and fail because
 soft-float returns ordinary (wrong) numeric results instead.
 
 
-ELF label-difference (1 failure)
-------------------------------
+ELF label-difference (1 failure + 1 unresolved)
+------------------------------------------------
   pr41239.c     -O3 -g only (compile error, not execution)
 
 At -O3 -g, GCC emits DWARF debug info containing a .word directive with

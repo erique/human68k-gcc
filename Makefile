@@ -450,7 +450,7 @@ check-torture:
 	fi
 	HUMAN68K_PREFIX=$(PREFIX) $(MAKE) -C $(BUILD)/gcc check-gcc-c \
 		"RUNTESTFLAGS=--target_board=human68k execute.exp=* SIM=run68"
-	@passes=$$(grep -c '^PASS' $(BUILD)/gcc/gcc/testsuite/gcc/gcc.sum 2>/dev/null || echo 0); \
+	@passes=$$(grep -c '^PASS' $(BUILD)/gcc/gcc/testsuite/gcc/gcc.sum 2>/dev/null) || passes=0; \
 	echo "torture: $$passes passes"; \
 	if [ "$$passes" -lt 1000 ]; then \
 		echo "FAIL: expected at least 1000 passes, got $$passes"; exit 1; \
