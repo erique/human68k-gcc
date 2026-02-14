@@ -2,7 +2,7 @@
 # Wrapper for DejaGNU: convert ELF to X-file and run with run68
 # Usage: run68-sim.sh <elf-binary> [args...]
 
-PREFIX=/opt/human68k
+PREFIX="${HUMAN68K_PREFIX:-/opt/human68k}"
 ELF2X68K="${PREFIX}/bin/elf2x68k"
 RUN68="${PREFIX}/bin/run68"
 

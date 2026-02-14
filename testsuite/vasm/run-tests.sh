@@ -4,7 +4,7 @@
 #   - standalone .S files: assemble, link, convert, run
 #   - mixed .S + .c pairs: assemble .S with vasm, compile .c with gcc, link, run
 
-PREFIX=/opt/human68k
+PREFIX="${HUMAN68K_PREFIX:-/opt/human68k}"
 VASM="${PREFIX}/bin/vasmm68k_mot"
 CC="${PREFIX}/bin/m68k-human68k-gcc"
 ELF2X68K="${PREFIX}/bin/elf2x68k"

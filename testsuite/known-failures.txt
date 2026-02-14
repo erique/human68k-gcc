@@ -1,0 +1,57 @@
+GCC torture test known failures for m68k-human68k
+==================================================
+
+Results: 14819 pass / 35 fail (99.8% pass rate)
+Tested at 6 optimization levels: -O0, -O1, -O2, -O3, -O3 -g, -Os
+
+None of the failures are codegen bugs. All fall into these categories:
+
+
+Emulator timeout (13 failures)
+------------------------------
+  memcpy-1.c    all levels except -O3
+  multi-ix.c    all levels
+  pr23135.c     -O0 only
+
+Tests run under run68, a user-mode Human68k emulator that interprets every
+instruction. It is roughly 1000x slower than native execution, and tests
+with large loops or big memory copies exceed the 300-second DejaGNU timeout.
+The same tests pass on real hardware. memcpy-1 at -O3 happens to survive
+because the optimizer replaces the loop with an inline block move.
+
+
+No PIC/GOT support (15 failures)
+---------------------------------
+  pr71626-2.c   all levels (3 compile errors + 12 execution failures)
+
+This test requires -fpic (position-independent code), which needs a Global
+Offset Table (GOT). Human68k is a bare-metal target with no dynamic linker
+or shared library support, so -fpic is not implemented. The X68000 loads
+executables at fixed addresses assigned by the OS and uses a relocation
+table in the X-file header instead.
+
+
+No Inf/NaN in soft-float (6 failures)
+--------------------------------------
+  conversion.c  -O0 only
+  pr39228.c     -O0, -O1, -O2, -O3 -g, -Os
+
+The 68000 has no FPU, so all floating-point is done in software via
+libgcc's soft-float routines (lb1sf68.S). These routines do not generate
+or propagate IEEE 754 special values (infinity, NaN, denormals). The tests
+rely on detecting Inf from overflow or NaN from 0.0/0.0 and fail because
+soft-float returns ordinary (wrong) numeric results instead. The same
+failures occur on amiga-gcc with the same soft-float library.
+
+
+ELF label-difference (1 failure)
+------------------------------
+  pr41239.c     -O3 -g only (compile error, not execution)
+
+At -O3 -g, GCC emits DWARF debug info containing a .word directive with
+a difference of two labels in different subsections (e.g. .word .Lfoo-.Lbar).
+The m68k ELF assembler (gas) cannot resolve label differences that cross
+subsection boundaries and rejects it with "unsupported relocation". This
+only manifests at -O3 -g because other optimization levels don't produce
+the specific code pattern that triggers the cross-subsection reference in
+debug info.

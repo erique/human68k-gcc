@@ -433,13 +433,13 @@ $(ASM_INC_DIR)/dos.inc $(ASM_INC_DIR)/iocs.inc: tools/gen-asm-inc.sh $(PROJECTS)
 check: check-human68k check-vasm check-torture
 
 check-human68k:
-	testsuite/human68k/run-tests.sh
+	HUMAN68K_PREFIX=$(PREFIX) testsuite/human68k/run-tests.sh
 
 check-vasm:
-	testsuite/vasm/run-tests.sh
+	HUMAN68K_PREFIX=$(PREFIX) testsuite/vasm/run-tests.sh
 
 check-torture:
-	DEJAGNU=$(shell pwd)/testsuite/site.exp $(MAKE) -C $(BUILD)/gcc check-gcc-c "RUNTESTFLAGS=--target_board=human68k execute.exp=* SIM=run68" | grep '# of\|PASS\|FAIL\|===\|Running\|Using'
+	DEJAGNU=$(shell pwd)/testsuite/site.exp HUMAN68K_PREFIX=$(PREFIX) $(MAKE) -C $(BUILD)/gcc check-gcc-c "RUNTESTFLAGS=--target_board=human68k execute.exp=* SIM=run68" | grep '# of\|PASS\|FAIL\|===\|Running\|Using'
 
 # =================================================
 # info

@@ -1,1 +1,2 @@
-lappend boards_dir "/home/erik/src/human68k-gcc/testsuite/boards"
+set srcdir [file dirname [info script]]
+lappend boards_dir "$srcdir/boards"

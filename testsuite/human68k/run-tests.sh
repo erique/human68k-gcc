@@ -3,7 +3,7 @@
 # Usage: run-tests.sh [test.c|test.cc ...]
 # If no arguments, runs all .c and .cc files in this directory.
 
-PREFIX=/opt/human68k
+PREFIX="${HUMAN68K_PREFIX:-/opt/human68k}"
 CC="${PREFIX}/bin/m68k-human68k-gcc"
 CXX="${PREFIX}/bin/m68k-human68k-g++"
 ELF2X68K="${PREFIX}/bin/elf2x68k"

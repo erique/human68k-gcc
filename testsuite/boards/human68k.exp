@@ -1,6 +1,10 @@
 load_generic_config "sim"
 
-set_board_info sim "/home/erik/src/human68k-gcc/tools/run68-sim.sh"
+# Find run68-sim.sh relative to this board file
+set boarddir [file dirname [info script]]
+set toolsdir [file normalize "$boarddir/../../tools"]
+
+set_board_info sim "$toolsdir/run68-sim.sh"
 set_board_info sim,options ""
 set_board_info target_install {m68k-human68k}
 set_board_info is_simulator 1
