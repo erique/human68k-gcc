@@ -1,4 +1,5 @@
 # docker build -t human68k .
+# docker build --target=test -t human68k-test .
 # docker run -v $PWD:/host --rm -it human68k
 # ( --platform linux/amd64 )
 
@@ -13,7 +14,15 @@ RUN apt-get update -y && apt-get install -y \
 
 RUN git clone -b gcc-6.5.0 https://github.com/erique/human68k-gcc.git /tmp/human68k-gcc
 WORKDIR /tmp/human68k-gcc
-RUN make min
+RUN git pull && make update && make -j min
+
+FROM builder AS test
+# docker build --target=test  --progress=plain --no-cache -t human68k-test .
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    dejagnu expect && \
+    rm -rf /var/lib/apt/lists/*
+RUN make -j all
+RUN make check
 
 FROM debian:12-slim
 

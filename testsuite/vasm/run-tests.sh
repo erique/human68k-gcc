@@ -288,24 +288,29 @@ for src in "${DIR}"/*.S; do
     fi
 done
 
-# Debug standalone tests (debug_*.S without matching .c)
-for src in "${DIR}"/debug_*.S; do
-    [ -f "$src" ] || continue
-    name="$(basename "$src" .S)"
-    if [ -f "${DIR}/${name}.c" ]; then
-        continue
-    fi
-    run_debug_standalone "$src"
-done
+# Debug tests require GDB
+if [ -x "$GDB" ]; then
+    # Debug standalone tests (debug_*.S without matching .c)
+    for src in "${DIR}"/debug_*.S; do
+        [ -f "$src" ] || continue
+        name="$(basename "$src" .S)"
+        if [ -f "${DIR}/${name}.c" ]; then
+            continue
+        fi
+        run_debug_standalone "$src"
+    done
 
-# Debug mixed tests (debug_*.S with matching .c)
-for src in "${DIR}"/debug_*.S; do
-    [ -f "$src" ] || continue
-    name="$(basename "$src" .S)"
-    if [ -f "${DIR}/${name}.c" ]; then
-        run_debug_mixed "$src" "${DIR}/${name}.c"
-    fi
-done
+    # Debug mixed tests (debug_*.S with matching .c)
+    for src in "${DIR}"/debug_*.S; do
+        [ -f "$src" ] || continue
+        name="$(basename "$src" .S)"
+        if [ -f "${DIR}/${name}.c" ]; then
+            run_debug_mixed "$src" "${DIR}/${name}.c"
+        fi
+    done
+else
+    printf "%-30s SKIP (no GDB)\n" "debug tests..."
+fi
 
 total=$((pass + fail + error))
 printf "\n%d tests: %d pass, %d fail, %d error\n" "$total" "$pass" "$fail" "$error"
