@@ -467,7 +467,7 @@ sdk: $(BUILD)/sdk/_done
 
 $(BUILD)/sdk/_done: $(BUILD)/gcc/_libgcc_done
 	$(L0)"sdk"$(L1) for pkg in $(SDKS); do sdk/install install $$pkg $(PREFIX) || exit 1; done $(L2)
-	@echo "done" >$@
+	@mkdir -p $(dir $@) && echo "done" >$@
 
 $(SDKS): $(BUILD)/gcc/_libgcc_done
 	$(L0)"sdk $@"$(L1) sdk/install install $@ $(PREFIX) $(L2)
