@@ -1,0 +1,289 @@
+diff -ruN orig/include/err.h patched/include/err.h
+--- orig/include/err.h	2026-02-16 14:19:41.098391485 +0100
++++ patched/include/err.h	2026-02-16 14:19:52.475289060 +0100
+@@ -1,26 +1,15 @@
+ #ifndef __err_h__
+ #define	__err_h__
+ 
+-#ifndef __cdecl_h__
+-#include <cdecl.h>
+-#endif
+-
+-#ifndef __sys_types_h__
+-#include <sys/types.h>
+-#endif
+-
+-#ifndef __va_list_defined__
+-#define __va_list_defined__
+-typedef char *va_list;
+-#endif
++#include <stdarg.h>
+ 
+-_EXTERN (volatile void err (int, const char *,...));
+-_EXTERN (volatile void verr (int, const char *, va_list));
+-_EXTERN (volatile void errx (int, const char *,...));
+-_EXTERN (volatile void verrx (int, const char *, va_list));
+-_EXTERN (void warn (const char *,...));
+-_EXTERN (void vwarn (const char *, va_list));
+-_EXTERN (void warnx (const char *,...));
+-_EXTERN (void vwarnx (const char *, va_list));
++void __attribute__((noreturn)) err(int, const char *, ...);
++void __attribute__((noreturn)) verr(int, const char *, va_list);
++void __attribute__((noreturn)) errx(int, const char *, ...);
++void __attribute__((noreturn)) verrx(int, const char *, va_list);
++void warn(const char *, ...);
++void vwarn(const char *, va_list);
++void warnx(const char *, ...);
++void vwarnx(const char *, va_list);
+ 
+ #endif
+diff -ruN orig/include/fnmatch.h patched/include/fnmatch.h
+--- orig/include/fnmatch.h	2026-02-16 14:21:12.566635782 +0100
++++ patched/include/fnmatch.h	2026-02-16 14:21:21.007279117 +0100
+@@ -1,16 +1,12 @@
+ #ifndef	__fnmatch_h__
+ #define	__fnmatch_h__
+ 
+-#ifndef __cdecl_h__
+-#include <cdecl.h>
+-#endif
+-
+ #define	FNM_NOMATCH	1	/* Match failed. */
+ 
+ #define	FNM_NOESCAPE	0x01	/* Disable backslash escaping. */
+ #define	FNM_PATHNAME	0x02	/* Slash must be matched by slash. */
+ #define	FNM_PERIOD		0x04	/* Period must be matched by period. */
+ 
+-_EXTERN (int_ fnmatch(const char *, const char *, int));
++int fnmatch(const char *, const char *, int);
+ 
+ #endif
+diff -ruN orig/include/glob.h patched/include/glob.h
+--- orig/include/glob.h	2026-02-16 14:21:12.569070949 +0100
++++ patched/include/glob.h	2026-02-16 14:21:29.289465090 +0100
+@@ -42,7 +42,7 @@
+ #define	GLOB_NOSPACE	(-1)	/* Malloc call failed. */
+ #define	GLOB_ABEND	(-2)	/* Unignored error. */
+ 
+-_EXTERN (int glob (const char *, int, int (*)(const char *, int), glob_t *));
+-_EXTERN (void globfree (glob_t *));
++int glob(const char *, int, int (*)(const char *, int), glob_t *);
++void globfree(glob_t *);
+ 
+ #endif
+diff -ruN orig/include/util.h patched/include/util.h
+--- orig/include/util.h	2026-02-16 14:22:20.265108315 +0100
++++ patched/include/util.h	2026-02-16 14:22:28.323795364 +0100
+@@ -3,8 +3,6 @@
+ 
+ #include <sys/types.h>
+ #include <stdio.h>
+-#include <pwd.h>
+-#include <termios.h>
+ 
+ #define	FPARSELN_UNESCESC	0x01
+ #define	FPARSELN_UNESCCONT	0x02
+diff -ruN orig/src/err.c patched/src/err.c
+--- orig/src/err.c	2026-02-16 14:19:41.081359901 +0100
++++ patched/src/err.c	2026-02-16 14:19:58.582426482 +0100
+@@ -5,9 +5,9 @@
+ #include <string.h>
+ #include <stdarg.h>
+ 
+-extern char *__progname;	/* Program name, from crt0. */
++char *__progname = "";
+ 
+-volatile void
++void __attribute__((noreturn))
+ err(int eval, const char *fmt, ...)
+ {
+ 	va_list ap;
+@@ -16,11 +16,8 @@
+ 	va_end(ap);
+ }
+ 
+-volatile void
+-verr(eval, fmt, ap)
+-int eval;
+-const char *fmt;
+-va_list ap;
++void __attribute__((noreturn))
++verr(int eval, const char *fmt, va_list ap)
+ {
+ 	int sverrno;
+ 
+@@ -34,7 +31,7 @@
+ 	exit(eval);
+ }
+ 
+-volatile void
++void __attribute__((noreturn))
+ errx(int eval, const char *fmt, ...)
+ {
+ 	va_list ap;
+@@ -43,11 +40,8 @@
+ 	va_end(ap);
+ }
+ 
+-volatile void
+-verrx(eval, fmt, ap)
+-int eval;
+-const char *fmt;
+-va_list ap;
++void __attribute__((noreturn))
++verrx(int eval, const char *fmt, va_list ap)
+ {
+ 	(void)fprintf(stderr, "%s: ", __progname);
+ 	if (fmt != NULL)
+@@ -66,9 +60,7 @@
+ }
+ 
+ void
+-vwarn(fmt, ap)
+-const char *fmt;
+-va_list ap;
++vwarn(const char *fmt, va_list ap)
+ {
+ 	int sverrno;
+ 
+@@ -91,9 +83,7 @@
+ }
+ 
+ void
+-vwarnx(fmt, ap)
+-const char *fmt;
+-va_list ap;
++vwarnx(const char *fmt, va_list ap)
+ {
+ 	(void)fprintf(stderr, "%s: ", __progname);
+ 	if (fmt != NULL)
+diff -ruN orig/src/fparseln.c patched/src/fparseln.c
+--- orig/src/fparseln.c	2026-02-16 14:19:41.083937675 +0100
++++ patched/src/fparseln.c	2026-02-16 14:20:35.040246860 +0100
+@@ -54,11 +54,11 @@
+ 		if (lineno)
+ 			(*lineno)++;
+ 
+-#ifndef HUMAN68K
++#if !defined(HUMAN68K) && !defined(__human68k__)
+ 		if ((ptr = fgetln(fp, &s)) == NULL)
+ 			break;
+ #else
+-#define LINEBUFSIZ	(16 * 1024)	/* ë´ÇËÇÈÇ©ÇÀÅc */
++#define LINEBUFSIZ	(16 * 1024)	/* ÔøΩÔøΩÔøΩÔøΩÈÇ©ÔøΩÀÅc */
+ 		ptr = malloc(LINEBUFSIZ);
+ 		if (ptr == NULL) {
+ 			perror("fparseln");
+diff -ruN orig/src/gettimeofday.c patched/src/gettimeofday.c
+--- orig/src/gettimeofday.c	2026-02-16 14:19:41.085712196 +0100
++++ patched/src/gettimeofday.c	2026-02-16 14:23:33.595266540 +0100
+@@ -1,10 +1,8 @@
+ #include <time.h>
+ #include <sys/time.h>
+-#define __IOCS_INLINE__
+-#include <iocslib.h>
+ 
+ int
+-gettimeofday(struct timeval *tp, struct timezone *tzp)
++gettimeofday(struct timeval *__restrict tp, void *__restrict tzp)
+ {
+     tp->tv_sec = (long)time((time_t *)0);
+     tp->tv_usec = 0;
+diff -ruN orig/src/_setdatetime.c patched/src/_setdatetime.c
+--- orig/src/_setdatetime.c	2026-02-16 14:19:41.087449059 +0100
++++ patched/src/_setdatetime.c	2026-02-16 14:20:11.742722619 +0100
+@@ -1,7 +1,6 @@
+ #include <stdio.h>
+ #include <time.h>
+-#define __IOCS_INLINE__
+-#include <iocslib.h>
++#include <sys/iocs.h>
+ 
+ int
+ _setdatetime(struct tm *tm)
+diff -ruN orig/src/snprintf.c patched/src/snprintf.c
+--- orig/src/snprintf.c	2026-02-16 14:19:41.089882133 +0100
++++ patched/src/snprintf.c	2026-02-16 14:20:13.320758129 +0100
+@@ -1,24 +1,14 @@
+ #include <stdio.h>
+ #include <stdarg.h>
+-#include <sys/xstdio.h>
+ 
+ int snprintf (char *buffer, size_t n, const char *format, ...)
+ {
+-    int cnt;
+     va_list ap;
+-    struct _stdbuf string;
+ 
+-	if ((int)n < 1)
+-		return EOF;
++    if ((int)n < 1)
++        return EOF;
+     va_start (ap, format);
+-
+-    string._flag = _IOWRITE | _IOW | _IOBIN;
+-    string._ptr = string._base = (unsigned char *) buffer;
+-    string._cnt = string._bufsiz = n - 1;
+-    string._file = -1;
+-    string._nback = 0;
+-    cnt = _doprnt (format, ap, &string);
+-    buffer[cnt] = '\0';
++    int cnt = vsnprintf(buffer, n, format, ap);
+     va_end (ap);
+     return cnt;
+ }
+diff -ruN orig/src/strptime.c patched/src/strptime.c
+--- orig/src/strptime.c	2026-02-16 14:19:41.092038896 +0100
++++ patched/src/strptime.c	2026-02-16 14:25:01.661248616 +0100
+@@ -2,11 +2,11 @@
+ #include <ctype.h>
+ #include <locale.h>
+ #include <string.h>
++#include <strings.h>
+ #include <time.h>
+ #include <tzfile.h>
+ 
+-#define	__CONCAT(x,y)	x ## y
+-#define	_ctloc(x)		__CONCAT(_CurrentTimeLocale->,x)
++#define	_ctloc(x)		(_CurrentTimeLocale->x)
+ 
+ /*
+  * We do not implement alternate representations. However, we always
+diff -ruN orig/src/strtoq.c patched/src/strtoq.c
+--- orig/src/strtoq.c	2026-02-16 14:19:41.093770962 +0100
++++ patched/src/strtoq.c	2026-02-16 14:20:20.188912676 +0100
+@@ -4,6 +4,10 @@
+ #include <limits.h>
+ #include <stdlib.h>
+ 
++typedef long long quad_t;
++#define LONGLONG_MIN LLONG_MIN
++#define LONGLONG_MAX LLONG_MAX
++
+ /*
+  * Convert a string to a quad integer.
+  *
+diff -ruN orig/src/strtouq.c patched/src/strtouq.c
+--- orig/src/strtouq.c	2026-02-16 14:19:41.096220791 +0100
++++ patched/src/strtouq.c	2026-02-16 14:20:23.099978180 +0100
+@@ -4,6 +4,9 @@
+ #include <limits.h>
+ #include <stdlib.h>
+ 
++typedef unsigned long long u_quad_t;
++#define ULONGLONG_MAX ULLONG_MAX
++
+ /*
+  * Convert a string to an unsigned quad integer.
+  *
+diff -ruN orig/src/utimes.c patched/src/utimes.c
+--- orig/src/utimes.c	2026-02-16 14:25:21.891745079 +0100
++++ patched/src/utimes.c	2026-02-16 14:25:28.767858527 +0100
+@@ -1,6 +1,7 @@
+ /*
+  * utimes.c
+  */
++#include <sys/types.h>
+ #include <utime.h>
+ #include <sys/time.h> /* declared */
+ 

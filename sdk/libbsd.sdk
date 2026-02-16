@@ -1,0 +1,13 @@
+Short: BSD utility functions (err, fnmatch, strptime, etc.)
+Version: 0.5
+Url: https://nfggames.com/X68000/Mirrors/Groundzero%20Organization/x68tools/develop/lib/libbsd/libbsd-0.5.tar.gz
+
+srcdir: libbsd-0.5
+patch: libbsd.patch
+
+# Portable subset — excludes getgroups.c (needs grp.h) and glob.c (needs dirent+pwd)
+compile: libbsd.a -Wall -O -I build/libbsd/libbsd-0.5/include -- src/adjtime.c src/_def_time.c src/err.c src/fnmatch.c src/fparseln.c src/gettimeofday.c src/_setdatetime.c src/settimeofday.c src/snprintf.c src/stringlist.c src/strptime.c src/strsep.c src/strtoq.c src/strtouq.c src/utimes.c
+
+install_lib: libbsd.a
+install_headers_from: include . err.h fnmatch.h stringlist.h tzfile.h util.h
+install_headers_from: include/sys sys localedef.h

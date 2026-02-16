@@ -127,6 +127,8 @@ help:
 	@echo "make all                     build and install all"
 	@echo "make min                     build and install the minimal to use gcc"
 	@echo "make <target>                builds a target: binutils, gcc, newlib, libgcc, gdb, vasm"
+	@echo "make sdk                     build and install networking SDK packages"
+	@echo "make <sdk-package>           build a single SDK: $(SDKS)"
 	@echo "make clean                   remove the build folder"
 	@echo "make clean-<target>          remove the target's build folder"
 	@echo "make drop-prefix             remove all content from the prefix folder"
@@ -139,7 +141,7 @@ help:
 # =================================================
 .PHONY: all min gcc gdb binutils newlib libgcc
 
-all: binutils gcc newlib libgcc gdb tools vasm
+all: binutils gcc newlib libgcc gdb tools vasm sdk
 
 min: binutils gcc newlib libgcc tools vasm
 
@@ -453,6 +455,26 @@ check-torture:
 	if [ "$$passes" -lt 1000 ]; then \
 		echo "FAIL: expected at least 1000 passes, got $$passes"; exit 1; \
 	fi
+
+# =================================================
+# sdk (networking libraries: TCPPACKB, libinet, libbsd, libxnetwork, libioctl)
+# =================================================
+SDKS = $(patsubst sdk/%.sdk,%,$(wildcard sdk/*.sdk))
+
+.PHONY: sdk clean-sdk $(SDKS)
+
+sdk: $(BUILD)/sdk/_done
+
+$(BUILD)/sdk/_done: $(BUILD)/gcc/_libgcc_done
+	$(L0)"sdk"$(L1) for pkg in $(SDKS); do sdk/install install $$pkg $(PREFIX) || exit 1; done $(L2)
+	@echo "done" >$@
+
+$(SDKS): $(BUILD)/gcc/_libgcc_done
+	$(L0)"sdk $@"$(L1) sdk/install install $@ $(PREFIX) $(L2)
+
+clean-sdk:
+	sdk/install cleanall
+	rm -f $(BUILD)/sdk/_done
 
 # =================================================
 # info

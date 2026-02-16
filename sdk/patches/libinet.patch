@@ -1,0 +1,107 @@
+diff -ruN orig/include/netinet/in.h patched/include/netinet/in.h
+--- orig/include/netinet/in.h	1998-09-19 19:28:12.000000000 +0200
++++ patched/include/netinet/in.h	2026-02-16 14:06:32.507376265 +0100
+@@ -90,12 +90,7 @@
+  * Socket address, internet style.
+  */
+ struct sockaddr_in {
+-#ifdef HUMAN68K
+ 	u_short sin_family;
+-#else
+-	u_char sin_len;
+-	u_char sin_family;
+-#endif
+ 	u_short sin_port;
+ 	struct in_addr sin_addr;
+ 	char sin_zero[8];
+diff -ruN orig/include/sys/types.h patched/include/sys/types.h
+--- orig/include/sys/types.h	1998-10-31 06:27:24.000000000 +0100
++++ patched/include/sys/types.h	2026-02-16 14:18:03.365834269 +0100
+@@ -1,84 +1,8 @@
+ /*
+- * PROJECT C Library, X68000 PROGRAMMING INTERFACE DEFINITION
+- * --------------------------------------------------------------------
+- * This file is written by the Project C Library Group,  and completely
+- * in public domain. You can freely use, copy, modify, and redistribute
+- * the whole contents, without this notice.
+- * --------------------------------------------------------------------
+- * $Id: types.h,v 1.5 1994/05/02 16:10:08 mura Exp $
++ * Redirect to newlib's sys/types.h which provides all needed types
++ * (u_char, u_short, u_int, u_long, size_t, etc.)
+  */
+-
+ #ifndef __sys_types_h__
+ #define __sys_types_h__
+-
+-#ifndef __cdecl_h__
+-#include <cdecl.h>
+-#endif
+-
+-#ifndef __clock_t_defined__
+-#define __clock_t_defined__
+-typedef long clock_t;
+-#endif
+-
+-#ifndef __dosmode_t_defined__
+-#define __dosmode_t_defined__
+-typedef int_ dosmode_t;
+-#endif
+-
+-#ifndef __devmode_t_defined__
+-#define __devmode_t_defined__
+-typedef int_ devmode_t;
+-#endif
+-
+-#ifndef __size_t_defined__
+-#define __size_t_defined__
+-typedef unsigned long size_t;
+-#endif
+-
+-#ifndef __wchar_t_defined__
+-#define __wchar_t_defined__
+-typedef int_ wchar_t;
+-#endif
+-
+-#ifndef __time_t_defined__
+-#define __time_t_defined__
+-typedef int_ time_t;
+-#endif
+-
+-typedef char *caddr_t;
+-typedef char *daddr_t;
+-typedef int_ dev_t;
+-typedef int_ gid_t;
+-typedef int_ nlink_t;
+-typedef int_ pid_t;
+-typedef int_ uid_t;
+-typedef long ino_t;
+-typedef long off_t;
+-typedef unsigned int_ mode_t;
+-
+-typedef unsigned char u_char;
+-typedef unsigned char unchar;
+-typedef unsigned int_ u_int;
+-typedef unsigned long u_long;
+-typedef unsigned short u_short;
+-
+-typedef unsigned int_ uint;
+-typedef unsigned long ulong;
+-typedef unsigned short ushort;
+-
+-typedef long fd_mask;
+-
+-#define FD_SETSIZE (128+32)
+-#define NBBY       (8)
+-#define NFDBITS    (sizeof (fd_mask) * NBBY)
+-
+-typedef struct fd_set {
+-    fd_mask fds_bits[(FD_SETSIZE + NFDBITS - 1) / NFDBITS];
+-} fd_set;
+-
+-#define FD_CLR(f,p)   ((p)->fds_bits[(f) / NFDBITS] &= ~(1 << ((f) % NFDBITS)))
+-#define FD_SET(f,p)   ((p)->fds_bits[(f) / NFDBITS] |=  (1 << ((f) % NFDBITS)))
+-#define FD_ISSET(f,p) ((p)->fds_bits[(f) / NFDBITS] &   (1 << ((f) % NFDBITS)))
+-#define FD_ZERO(p)    (bzero ((char *) (p), sizeof (*(p))))
+-
++#include_next <sys/types.h>
+ #endif

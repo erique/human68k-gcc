@@ -10,7 +10,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y && apt-get install -y \
     build-essential git wget bison flex texinfo rsync \
     libgmp-dev libmpfr-dev libmpc-dev libncurses-dev \
-    cmake
+    cmake lhasa
 
 RUN git clone -b gcc-6.5.0 https://github.com/erique/human68k-gcc.git /tmp/human68k-gcc
 WORKDIR /tmp/human68k-gcc

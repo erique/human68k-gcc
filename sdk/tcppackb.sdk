@@ -1,0 +1,25 @@
+Short: KGC TCP/IP driver SDK (libnetwork, libether)
+Version: 1.0
+Url: https://nfggames.com/X68000/Mirrors/Groundzero%20Organization/x68tools/inet/TCPPACKB.LZH
+
+srcdir: src
+patch: tcppackb.patch
+
+# libether — Ethernet driver interface
+compile: libether.a -Wall -O -I build/tcppackb/include -I build/tcppackb/src/samples -- libether/libether.c
+
+# libnetwork — TCP/IP socket API
+compile: libnetwork.a -Wall -O -I build/tcppackb/include -I build/tcppackb/src/samples -- libnetwork/arp.c libnetwork/dns.c libnetwork/gethostnamadr.c libnetwork/get_version.c libnetwork/h2n_n2h.c libnetwork/iface.c libnetwork/mib.c libnetwork/rip.c libnetwork/route.c libnetwork/search_ti_entry.c libnetwork/sock.c libnetwork/socket.c libnetwork/user.c
+
+# sample programs
+link: arp.x -Wall -O -I build/tcppackb/include -I build/tcppackb/src/samples -- samples/arp.c samples/stack.c -- -lnetwork -lether -lm
+link: finger.x -Wall -O -I build/tcppackb/include -I build/tcppackb/src/samples -- samples/finger.c samples/stack.c -- -lnetwork -lether -lm
+link: ifconfig.x -Wall -O -I build/tcppackb/include -I build/tcppackb/src/samples -- samples/ifconfig.c samples/stack.c -- -lnetwork -lether -lm
+link: inetdconf.x -Wall -O -I build/tcppackb/include -I build/tcppackb/src/samples -- samples/inetdconf.c samples/stack.c -- -lnetwork -lether -lm
+link: netstat.x -Wall -O -I build/tcppackb/include -I build/tcppackb/src/samples -- samples/netstat.c samples/stack.c -- -lnetwork -lether -lm
+link: ping.x -Wall -O -I build/tcppackb/include -I build/tcppackb/src/samples -- samples/ping.c samples/stack.c -- -lnetwork -lether -lm
+link: statistic.x -Wall -O -I build/tcppackb/include -I build/tcppackb/src/samples -- samples/statistic.c samples/stack.c -- -lether -lm
+
+install_lib: libether.a
+install_lib: libnetwork.a
+install_headers_from: ../include network etherdrv.h network.h socket.h tcpipdrv.h

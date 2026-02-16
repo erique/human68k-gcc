@@ -1,0 +1,11 @@
+Short: Socket-to-fd bridge (gethostname wrapper)
+Version: 1.0
+Url: https://nfggames.com/X68000/Mirrors/Groundzero%20Organization/x68tools/develop/lib/libxnetwork/libxnet1.lzh
+
+depends: tcppackb
+srcdir: .
+
+# Only gethname.c is buildable standalone (rest needs X68k libc internals)
+compile: libxnetwork.a -Wall -O -- gethname.c
+
+install_lib: libxnetwork.a

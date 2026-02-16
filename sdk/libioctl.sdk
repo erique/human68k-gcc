@@ -1,0 +1,9 @@
+Short: BSD-compatible ioctl/select/termios headers
+Version: 0.1
+Url: https://nfggames.com/X68000/Mirrors/Groundzero%20Organization/x68tools/develop/lib/libioctl/lbioctl0.gz
+
+srcdir: libioctl
+
+# Headers only — source needs X68k libc internals (sys/xglob.h, _libc_tty_ptr)
+install_headers_from: include . sgtty.h paths.h termios.h
+install_headers_from: include/sys sys ioctl.h termios.h tty.h ttydev.h ttychars.h ttydefaults.h ioctl_compat.h

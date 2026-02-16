@@ -1,0 +1,221 @@
+#!/bin/bash
+#
+# sdk/install — download, build, and install SDK packages
+#
+# Usage: sdk/install <command> <package> <prefix>
+#
+# Commands:
+#   install   download, build, and install a package
+#   clean     remove build directory for a package
+#   cleanall  remove all build directories
+#
+# Modeled after amiga-gcc/sdk/install. Each package is described by
+# a .sdk file in this directory. The .sdk file contains metadata,
+# a download URL, and declarative build/install instructions.
+
+set -e
+
+SDKDIR="$(cd "$(dirname "$0")" && pwd)"
+TOPDIR="$(cd "$SDKDIR/.." && pwd)"
+DOWNLOAD="$TOPDIR/download"
+
+case $1 in
+  cleanall)
+	rm -rf build
+	exit 0
+  ;;
+esac
+
+if [ ! -e "$SDKDIR/$2.sdk" ]; then
+	echo "sdk/$2.sdk not found"
+	exit 1
+fi
+
+PREFIX="$3"
+TARGET=m68k-human68k
+CC="$PREFIX/bin/$TARGET-gcc"
+AR="$PREFIX/bin/$TARGET-ar"
+RANLIB="$PREFIX/bin/$TARGET-ranlib"
+ELF2X68K="$PREFIX/bin/elf2x68k"
+SYSROOT="$PREFIX/$TARGET"
+
+case $1 in
+  install)
+	while IFS='' read -r line || [[ -n "$line" ]]; do
+		# skip blank lines and comments
+		[[ -z "$line" || "$line" == \#* ]] && continue
+
+		# split on first colon: command and arguments
+		cmd="${line%%:*}"
+		cmd="${cmd## }"
+		cmd="${cmd%% }"
+		args="${line#*:}"
+		args="${args# }"
+		# word-split args into array
+		a=($args)
+		case "$cmd" in
+			Short | Version)
+				echo "$line"
+				;;
+			Url)
+				url="${a[0]}"
+				file=$(basename "$url")
+				mkdir -p "$DOWNLOAD"
+				if [ ! -e "$DOWNLOAD/$file" ]; then
+					echo "downloading $file"
+					wget -q -O "$DOWNLOAD/$file" "$url" || { rm -f "$DOWNLOAD/$file"; exit 1; }
+				fi
+				if [ ! -e "build/$2/_extracted" ]; then
+					mkdir -p "build/$2"
+					echo "extracting $file"
+					pushd "build/$2" >/dev/null
+					case "$file" in
+						*.lzh | *.LZH | *.Lzh)
+							lha xfq "$DOWNLOAD/$file"
+							;;
+						*.tar.gz | *.tgz)
+							tar xzf "$DOWNLOAD/$file"
+							;;
+						*.gz)
+							gunzip -c "$DOWNLOAD/$file" | tar xf -
+							;;
+					esac
+					popd >/dev/null
+					touch "build/$2/_extracted"
+				fi
+			;;
+			srcdir)
+				SRCDIR="build/$2/${a[0]}"
+			;;
+			strip_cr)
+				echo "stripping CR from build/$2"
+				find "build/$2" -name '*.c' -exec sed -i 's/\r$//' {} +
+			;;
+			depends)
+				dep="${a[0]}"
+				if [ ! -e "build/$dep/_installed" ]; then
+					echo "dependency $dep not installed, installing..."
+					"$0" install "$dep" "$PREFIX"
+				fi
+			;;
+			patch)
+				patchfile="$SDKDIR/patches/${a[0]}"
+				echo "applying patch $(basename "$patchfile") to $SRCDIR"
+				patch -N -p1 -r - -d "$SRCDIR" < "$patchfile" || true
+			;;
+			compile)
+				# compile: <lib_output> <cflags...> -- <src1.c> <src2.c> ...
+				shift_past_dashdash=0
+				lib=""
+				cflags=""
+				srcs=""
+				for token in "${a[@]}"; do
+					if [ "$shift_past_dashdash" -eq 1 ]; then
+						srcs="$srcs $token"
+					elif [ "$token" = "--" ]; then
+						shift_past_dashdash=1
+					elif [ -z "$lib" ]; then
+						lib="$token"
+					else
+						cflags="$cflags $token"
+					fi
+				done
+				mkdir -p "build/$2/_obj"
+				objs=""
+				for src in $srcs; do
+					srcpath="$SRCDIR/$src"
+					obj="build/$2/_obj/$(basename "${src%.c}.o")"
+					echo "  CC $src"
+					$CC $cflags -c "$srcpath" -o "$obj"
+					objs="$objs $obj"
+				done
+				echo "  AR $lib"
+				$AR rcs "build/$2/_obj/$lib" $objs
+				$RANLIB "build/$2/_obj/$lib"
+			;;
+			link)
+				# link: <output.x> <cflags> -- <src1.c ...> -- <ldflags...>
+				section=0
+				exe=""
+				cflags=""
+				srcs=""
+				ldflags=""
+				for token in "${a[@]}"; do
+					if [ "$token" = "--" ]; then
+						section=$((section + 1))
+					elif [ "$section" -eq 0 ]; then
+						if [ -z "$exe" ]; then
+							exe="$token"
+						else
+							cflags="$cflags $token"
+						fi
+					elif [ "$section" -eq 1 ]; then
+						srcs="$srcs $token"
+					else
+						ldflags="$ldflags $token"
+					fi
+				done
+				mkdir -p "build/$2/_obj"
+				objs=""
+				for src in $srcs; do
+					if [[ "$src" == *.o ]]; then
+						objs="$objs build/$2/_obj/$src"
+					else
+						srcpath="$SRCDIR/$src"
+						obj="build/$2/_obj/$(basename "${src%.c}.o")"
+						echo "  CC $src"
+						$CC $cflags -c "$srcpath" -o "$obj"
+						objs="$objs $obj"
+					fi
+				done
+				echo "  LINK $exe"
+				$CC -L"build/$2/_obj" -L"$SYSROOT/lib" $objs $ldflags -o "build/$2/_obj/${exe%.x}.elf"
+				$ELF2X68K "build/$2/_obj/${exe%.x}.elf" "build/$2/_obj/$exe"
+			;;
+			install_lib)
+				lib="${a[0]}"
+				echo "  INSTALL lib/$lib"
+				install -d "$SYSROOT/lib"
+				install -m 644 "build/$2/_obj/$lib" "$SYSROOT/lib/"
+			;;
+			install_bin)
+				bin="${a[0]}"
+				echo "  INSTALL bin/$bin"
+				install -d "$SYSROOT/bin"
+				install -m 755 "build/$2/_obj/$bin" "$SYSROOT/bin/"
+			;;
+			install_headers)
+				# install_headers: <dest_subdir> <src1.h> <src2.h> ...
+				destdir="${a[0]}"
+				for hdr in "${a[@]:1}"; do
+					echo "  INSTALL include/$destdir/$hdr"
+					install -d "$SYSROOT/sys-include/$destdir"
+					install -m 644 "$SRCDIR/$hdr" "$SYSROOT/sys-include/$destdir/"
+				done
+			;;
+			install_headers_from)
+				# install_headers_from: <src_subdir> <dest_subdir> <file1.h> ...
+				srcsubdir="${a[0]}"
+				destdir="${a[1]}"
+				for hdr in "${a[@]:2}"; do
+					echo "  INSTALL include/$destdir/$hdr"
+					install -d "$SYSROOT/sys-include/$destdir"
+					install -m 644 "$SRCDIR/$srcsubdir/$hdr" "$SYSROOT/sys-include/$destdir/"
+				done
+			;;
+			*)
+				echo "unknown command: $cmd"
+				exit 1
+			;;
+		esac
+	done < "$SDKDIR/$2.sdk"
+	touch "build/$2/_installed"
+	echo "$2: done"
+  ;;
+  clean)
+	rm -rf "build/$2"
+  ;;
+  cleanall)
+	rm -rf build
+  ;;
+esac

@@ -1,0 +1,16 @@
+Short: BSD socket API wrappers (inet_addr, htonl, etc.)
+Version: 0.4
+Url: https://nfggames.com/X68000/Mirrors/Groundzero%20Organization/x68tools/develop/lib/libinet/libinet-0.4.tar.gz
+
+depends: tcppackb
+srcdir: libinet-0.4
+patch: libinet.patch
+
+# Portable subset only — excludes X68k libc-coupled code
+# isipaddr.c excluded (already in libnetwork from tcppackb)
+compile: libinet.a -Wall -O -I build/libinet/libinet-0.4/include -- src/htonl.c src/htons.c src/ntohl.c src/ntohs.c src/inet_addr.c src/inet_ntoa.c src/inet_lnaof.c src/inet_makeaddr.c src/inet_netof.c src/inet_network.c src/getdomainname.c src/gethname.c
+
+install_lib: libinet.a
+install_headers_from: include/arpa arpa inet.h
+install_headers_from: include/netinet netinet in.h
+install_headers_from: include . netdb.h
