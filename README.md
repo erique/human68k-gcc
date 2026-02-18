@@ -125,22 +125,20 @@ ROM monitor stub with `hudson-bridge`, a GDB RSP to DB.X 3.00 protocol bridge.
 The newlib Human68k syscall layer, IOCS/DOS stubs, crt0, and linker scripts
 carry forward from lydux with fixes.
 
-**xdev68k** -- Takes a completely different approach: uses an unmodified
-`m68k-elf` GCC toolchain and converts GAS assembly output to Motorola syntax
-via a Perl script (`x68k_gas2has.pl`), then assembles and links with the
-original Sharp tools (HAS060.X, hlk301.x) running under the run68 emulator.
+**xdev68k** -- Uses an unmodified `m68k-elf` GCC toolchain and converts GAS
+assembly output to Motorola syntax via a Perl script (`x68k_gas2has.pl`),
+then assembles and links with the original Sharp tools (HAS060.X, hlk301.x)
+running under the run68 emulator.
 This means it can use native X68k libraries directly (XC, LIBC) without any
 newlib port, but depends on the GAS-to-HAS conversion handling all edge cases.
 Uses `-fcall-used-d2 -fcall-used-a2` for XC ABI compatibility.
 
-**yunkya2/elf2x68k** -- Despite the repo name, this is a full toolchain
-(GCC 13.4.0, binutils 2.44, newlib 4.5.0, GDB 16.3). Uses an unmodified
-`m68k-elf` toolchain with a custom specs file that transparently invokes
-an ELF-to-X-file converter at link time. Closest to our approach but avoids
-patching GCC/binutils entirely. Can use either newlib (based on lydux's port)
-or native XC libraries via an `x68k2elf` object converter. Provides remote
-debugging via `gdbserver-x68k`. Uses `-fcall-used-d2 -fcall-used-a2` for
-XC ABI compatibility.
+**yunkya2/elf2x68k** -- Uses an unmodified `m68k-elf` toolchain with a custom
+specs file that transparently invokes an ELF-to-X-file converter at link time.
+Closest to our approach but avoids patching GCC/binutils entirely.
+Can use either newlib (based on lydux's port) or native XC libraries via an
+`x68k2elf` object converter. Provides remote debugging via `gdbserver-x68k`.
+Uses `-fcall-used-d2 -fcall-used-a2` for XC ABI compatibility.
 
 ### IOCS / DOS access
 
