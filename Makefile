@@ -385,7 +385,7 @@ $(PREFIX)/bin/run68: $(BUILD)/run68x/run68 | $(PREFIX)/bin
 
 $(BUILD)/run68x/run68: $(PROJECTS)/run68x/CMakeLists.txt $(shell find 2>/dev/null $(PROJECTS)/run68x/src -type f)
 	@mkdir -p $(BUILD)/run68x
-	$(L0)"build run68"$(L1) cd $(BUILD)/run68x && cmake $(PROJECTS)/run68x -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-Wno-format-truncation" && $(MAKE) $(L2)
+	$(L0)"build run68"$(L1) cd $(BUILD)/run68x && cmake $(PROJECTS)/run68x -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cc -DCMAKE_C_FLAGS="-Wno-format-truncation" && $(MAKE) $(L2)
 
 $(PROJECTS)/run68x/CMakeLists.txt:
 	@cd $(PROJECTS) && git clone -b $(run68x_BRANCH) --depth 16 $(run68x_URL) run68x
