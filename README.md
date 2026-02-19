@@ -16,19 +16,8 @@ newlib 3.0, plus:
 
 ## Quick start
 
-```sh
-make min                # builds binutils, gcc, newlib, libgcc, tools, vasm
-make all                # builds everything including GDB and test dependencies
-make check              # runs human68k tests + GCC torture suite
-```
-
-Default install prefix is `/opt/human68k`, needs to be writable:
-
-```sh
-sudo mkdir -p /opt/human68k && sudo chown $USER /opt/human68k
-```
-
-Override with `PREFIX=/path make min`.
+See [COMPILING.md](COMPILING.md) for platform-specific prerequisites and
+build instructions (Linux, macOS, Docker, Tart VM).
 
 ## Build pipeline
 
