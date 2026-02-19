@@ -83,6 +83,7 @@ typedef struct
 #define R_68K_32 1
 #define STB_LOCAL 0
 #define STB_GLOBAL 1
+#define SHN_ABS 0xFFF1
 
 #define ELF32_R_TYPE(i) ((i) & 0xff)
 #define ELF32_R_SYM(i) ((i) >> 8)
@@ -392,6 +393,20 @@ int main(int argc, char* argv[])
         if (relaEntSize == 0)
             relaEntSize = sizeof(Elf32_Rela);
 
+        // Get linked symbol table for this RELA section
+        uint32_t symtabIdx = read_be32(&sh->sh_link);
+        Elf32_Shdr* symtabSh = NULL;
+        uint32_t symOffset = 0;
+        uint32_t symEntSize = sizeof(Elf32_Sym);
+        if (symtabIdx < shnum)
+        {
+            symtabSh = (Elf32_Shdr*)((uint8_t*)shdrs + symtabIdx * shentsize);
+            symOffset = read_be32(&symtabSh->sh_offset);
+            uint32_t ent = read_be32(&symtabSh->sh_entsize);
+            if (ent != 0)
+                symEntSize = ent;
+        }
+
         int numEntries = relaSize / relaEntSize;
 
         for (int j = 0; j < numEntries; j++)
@@ -402,6 +417,16 @@ int main(int argc, char* argv[])
 
             if (ELF32_R_TYPE(rInfo) != R_68K_32)
                 continue;
+
+            // Skip relocations referencing absolute symbols (e.g. __stack_size)
+            if (symtabSh)
+            {
+                uint32_t symIdx = ELF32_R_SYM(rInfo);
+                Elf32_Sym* sym = (Elf32_Sym*)(elf + symOffset + symIdx * symEntSize);
+                uint16_t symShndx = read_be16(&sym->st_shndx);
+                if (symShndx == SHN_ABS)
+                    continue;
+            }
 
             // Calculate absolute offset in the image
             uint32_t absOffset;
